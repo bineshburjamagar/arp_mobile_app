@@ -42,9 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _combineAnswers() {
-    return _answers.entries
-        .map((e) => "${QuestionsList.questions[e.key]}: ${e.value}")
-        .join('\n---\n');
+    return _answers.values.join();
   }
 
   void _resetState() {
@@ -65,15 +63,27 @@ class _HomeScreenState extends State<HomeScreen> {
         curve: Curves.easeOut,
       );
     } else {
-      // Logic for final submission
       final combinedText = _combineAnswers();
-      debugPrint("Submission initiated. Combined Text:\n$combinedText");
 
-      // TODO: Replace this with your actual API call.
-      // Simulating API call and result: randomly returns true/false
+      debugPrint(
+        "Submission initiated. Combined Text:\n${combinedText.length}",
+      );
+
       final isDepressed = DateTime.now().second.isEven;
+      if (combinedText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.backgroundLight,
 
-      _showResultDialog(isDepressed); // Show the dynamic result dialog
+            content: Text(
+              'Please reflect and provide input for at least one question.',
+              style: TextStyle(color: AppColors.crisisRed),
+            ),
+          ),
+        );
+      } else {
+        _showResultDialog(isDepressed);
+      }
     }
   }
 
