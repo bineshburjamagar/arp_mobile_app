@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mindmirror_flutter/pages/screens/home_screen.dart';
+import 'package:mindmirror_flutter/pages/screens/splash_screen.dart';
 
-void main() {
+import 'database/disclamer_database_helper.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DisclaimerDatabaseHelper.instance.database;
+
   runApp(const MyApp());
 }
 
@@ -19,7 +24,7 @@ class MyApp extends StatelessWidget {
         fontFamily: GoogleFonts.montserrat().fontFamily,
         colorScheme: .fromSeed(seedColor: Colors.lightBlue),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }

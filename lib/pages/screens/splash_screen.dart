@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:mindmirror_flutter/pages/screens/disclaimer_screen.dart';
+import 'disclaimer_screen.dart';
+import 'home_screen.dart';
+
+import '../../database/disclamer_database_helper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,22 +17,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(
-      Duration(seconds: 3),
-      () => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (BuildContext context) => DisclaimerScreen(),
-        ),
-      ),
-    );
+    _checkDisclaimerStatus();
   }
+
+  bool _isDisclaimerAcknowledged = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+        children: const [
           Center(
             child: Text(
               'MIND-MIRROR',
@@ -40,5 +38,26 @@ class _SplashScreenState extends State<SplashScreen> {
         ],
       ),
     );
+  }
+
+  void _checkDisclaimerStatus() async {
+    final status = await DisclaimerDatabaseHelper.instance
+        .getDisclaimerStatus();
+
+    setState(() {
+      _isDisclaimerAcknowledged = status;
+    });
+
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (BuildContext context) => _isDisclaimerAcknowledged
+                ? const HomeScreen()
+                : const DisclaimerScreen(),
+          ),
+        );
+      }
+    });
   }
 }

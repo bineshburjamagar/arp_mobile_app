@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/icon_park_twotone.dart';
 import 'package:mindmirror_flutter/config/colors.dart';
+import 'package:mindmirror_flutter/database/disclamer_database_helper.dart';
+
+import 'home_screen.dart';
 
 /// A dedicated screen for displaying the critical legal and medical disclaimer.
 class DisclaimerScreen extends StatefulWidget {
@@ -14,7 +17,6 @@ class DisclaimerScreen extends StatefulWidget {
 class _DisclaimerScreenState extends State<DisclaimerScreen> {
   bool _isAcknowledged = false;
 
-  /// Shows the confirmation dialog when the user accepts the terms.
   void _showAcceptanceDialog() {
     showDialog(
       context: context,
@@ -38,8 +40,14 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
-                // TODO: In a real app, you would navigate to the main screen here
+                DisclaimerDatabaseHelper.instance.updateDisclaimerStatus(
+                  acknowledged: true,
+                );
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (BuildContext context) => HomeScreen(),
+                  ),
+                );
                 debugPrint(
                   'Disclaimer accepted. Proceeding to main application.',
                 );
