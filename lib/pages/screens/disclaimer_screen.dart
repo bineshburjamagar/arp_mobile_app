@@ -40,12 +40,14 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
+                // Update database status
                 DisclaimerDatabaseHelper.instance.updateDisclaimerStatus(
                   acknowledged: true,
                 );
+                // Navigate to home screen
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (BuildContext context) => HomeScreen(),
+                    builder: (BuildContext context) => const HomeScreen(),
                   ),
                 );
                 debugPrint(
@@ -76,11 +78,14 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.all(15.0),
-          child: Iconify(IconParkTwotone.people_safe_one, color: Colors.white),
+          child: Iconify(
+            IconParkTwotone.people_safe_one,
+            color: AppColors.pureWhite,
+          ),
         ), // widget
 
         title: const Text(
-          'Legal Disclaimer',
+          'Essential Legal Disclaimer',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primaryTeal,
@@ -116,12 +121,14 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
                           'The App relies on natural language processing (NLP) models which are inherently probabilistic and may produce inaccurate or biased results. The results generated are interpretations of language patterns and are not a clinical assessment. We make no representations or warranties about the accuracy, completeness, or suitability of the information or results provided.',
                     ),
 
+                    // Data and Privacy
                     _buildSection(
-                      title: 'Data and Privacy',
+                      title: 'Data Privacy and Non-Persistence',
                       content:
-                          'By using this App, you acknowledge that you have read and understood our Privacy Policy (link) regarding how your text data is processed and stored. Your privacy is important, but no transmission over the internet is 100% secure.',
+                          'By using this App, you acknowledge that all text entries are processed **anonymously and temporarily** by the analysis server solely for immediate classification. **NO user inputs or personal identifiers are stored** locally on the device or persistently on the server after the analysis result is delivered. Your privacy is paramount, but no transmission over the internet is 100% secure.',
                     ),
 
+                    // ---------------------------------------------------------------------
                     _buildSection(
                       title: 'Limitation of Liability',
                       content:
@@ -156,7 +163,7 @@ class _DisclaimerScreenState extends State<DisclaimerScreen> {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: AppColors.lightCrisisBackground,
-        border: Border(
+        border: const Border(
           left: BorderSide(color: AppColors.crisisRed, width: 4.0),
         ),
         borderRadius: BorderRadius.circular(8),

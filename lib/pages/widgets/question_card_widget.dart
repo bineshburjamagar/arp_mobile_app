@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:mindmirror_flutter/config/questions.dart';
 
 import '../../config/colors.dart';
+import '../../config/questions.dart';
 
 class QuestionCardWidget extends StatelessWidget {
   final int index;
-  final Map<int, String> answers;
+  final String initialAnswer;
+  final ValueChanged<String> onAnswerChanged; // NEW CALLBACK
+
   const QuestionCardWidget({
     super.key,
     required this.index,
-    required this.answers,
+    required this.initialAnswer,
+    required this.onAnswerChanged, // NEW REQUIRED PARAMETER
   });
 
   @override
@@ -27,6 +30,7 @@ class QuestionCardWidget extends StatelessWidget {
             children: [
               // Question Text
               Text(
+                // Use the mocked QuestionsList
                 QuestionsList.questions[index],
                 style: const TextStyle(
                   fontSize: 20,
@@ -40,9 +44,11 @@ class QuestionCardWidget extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   key: ValueKey('input_$index'),
-                  initialValue: answers[index],
+                  // Use initialAnswer prop passed from parent
+                  initialValue: initialAnswer,
                   onChanged: (text) {
-                    answers[index] = text;
+                    // FIX: Notify the parent state via the callback
+                    onAnswerChanged(text);
                   },
                   maxLines: null, // Allows multiline input
                   expands: true,

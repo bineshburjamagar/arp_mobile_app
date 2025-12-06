@@ -1,4 +1,4 @@
 class Endpoint {
-  String get apiUrl => "";
-  String get predictUrl => "";
+  String get apiUrl => "http://192.168.1.113:8000/";
+  String get predictUrl => "${apiUrl}analyze/";
 }

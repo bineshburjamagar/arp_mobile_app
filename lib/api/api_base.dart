@@ -16,8 +16,9 @@ class ApiBase {
     required String path,
     required dynamic data,
   }) async {
+    print('object');
     var response = await _dio.post(path, data: data);
-
+    print(response.data);
     return response;
   }
 }

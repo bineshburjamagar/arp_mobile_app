@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:mindmirror_flutter/api/api_base.dart';
+import 'package:mindmirror_flutter/api/endpoint.dart';
 import 'package:mindmirror_flutter/pages/widgets/question_card_widget.dart';
 import '../../config/colors.dart';
 import '../../config/questions.dart';
+import '../widgets/analysis_dialog.dart';
 import '../widgets/helpline_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -56,33 +61,71 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint("App state reset. Ready for next entry.");
   }
 
-  void _handleNext() {
+  bool _validateAnswers() {
+    return _answers.values.any((answer) => answer.trim().isNotEmpty);
+  }
+
+  void _handleNext() async {
+    // MARKED ASYNC
     if (_currentPage < _questionCount - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOut,
       );
     } else {
-      final combinedText = _combineAnswers();
-
-      debugPrint(
-        "Submission initiated. Combined Text:\n${combinedText.length}",
-      );
-
-      final isDepressed = DateTime.now().second.isEven;
-      if (combinedText.isEmpty) {
+      // 1. VALIDATION CHECK
+      if (!_validateAnswers()) {
+        // Show SnackBar for validation failure
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.backgroundLight,
-
-            content: Text(
-              'Please reflect and provide input for at least one question.',
-              style: TextStyle(color: AppColors.crisisRed),
+            content: const Text(
+              "Please reflect and provide input for at least one question.",
+              style: TextStyle(color: AppColors.pureWhite),
+            ),
+            backgroundColor: AppColors.primaryTeal,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         );
-      } else {
-        _showResultDialog(isDepressed);
+        return; // Stop execution
+      }
+
+      final combinedText = _combineAnswers();
+      log(
+        "Submission initiated. Combined Text length: ${combinedText.length}",
+        name: 'SUBMISSION',
+      );
+
+      // 2. API CALL WITH ERROR HANDLING
+      try {
+        var result = await ApiBase.postRequest(
+          data: {"text": combinedText},
+          path: Endpoint().predictUrl,
+        );
+
+        // Assume result.data is the Map<String, dynamic> response from the API wrapper
+        final Map<String, dynamic> apiResponse =
+            result.data as Map<String, dynamic>;
+
+        log("API Response Data: $apiResponse", name: 'API_CALL');
+
+        // 3. SHOW DIALOG
+
+        _showResultDialog(apiResponse);
+      } catch (e) {
+        log('API Error: $e', name: 'API_CALL_ERROR');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to analyze entry. Please check your connection.',
+              style: TextStyle(color: AppColors.pureWhite),
+            ),
+            backgroundColor: AppColors.crisisRed,
+          ),
+        );
       }
     }
   }
@@ -97,60 +140,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Shows the final analysis result UI (Depressed/Not Depressed).
-  void _showResultDialog(bool isDepressed) {
-    final resultTitle = isDepressed
-        ? 'Analysis Result: Caution'
-        : 'Analysis Result: Clear';
-    final resultMessage = isDepressed
-        ? 'The text analysis detected patterns associated with a higher risk profile. Please consider speaking with a professional or contact our helpline resources immediately.'
-        : 'The text analysis indicates a low risk profile today. Continue monitoring your well-being.';
+  void _showResultDialog(Map<String, dynamic> apiResponse) {
+    // Extract new data from the simulated API response
+    final bool isDepressed = apiResponse['is_depressed'] as bool;
+    final String resultClassification = apiResponse['result'] as String;
+    final String confidenceScore = apiResponse['confidence'] as String;
+
     final resultColor = isDepressed
         ? AppColors.crisisRed
         : AppColors.secondaryEmerald;
-    final resultIcon = isDepressed
-        ? Icons.sentiment_dissatisfied_rounded
-        : Icons.sentiment_satisfied_alt_rounded;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            resultTitle,
-            style: TextStyle(color: resultColor, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(resultIcon, color: resultColor, size: 60),
-              const SizedBox(height: 16),
-              Text(
-                resultMessage,
-                style: TextStyle(color: AppColors.textPrimary),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _resetState(); // Reset state and return to Q1
-              },
-              child: Text(
-                'Done',
-                style: TextStyle(
-                  color: AppColors.primaryTeal,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+        return AnalysisResultDialog(
+          isDepressed: isDepressed,
+          resultClassification: resultClassification,
+          confidenceScore: confidenceScore,
+          resultColor: resultColor,
+          onDone: _resetState, // Pass the _resetState method as the callback
         );
       },
     );
@@ -216,13 +225,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // --- Sliding Question Cards (PageView) ---
           Expanded(
             child: PageView.builder(
               controller: _pageController,
               itemCount: _questionCount,
               itemBuilder: (context, index) {
-                return QuestionCardWidget(index: index, answers: _answers);
+                return QuestionCardWidget(
+                  index: index,
+                  initialAnswer: _answers[index]!,
+                  onAnswerChanged: (newText) {
+                    // This is the callback that updates the parent's state
+                    setState(() {
+                      _answers[index] = newText;
+                    });
+                  },
+                );
               },
             ),
           ),
