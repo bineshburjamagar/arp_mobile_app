@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _currentPage = 0;
 
+  bool _isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -100,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       // 2. API CALL WITH ERROR HANDLING
+      setState(() {
+        _isLoading = true;
+      });
       try {
         var result = await ApiBase.postRequest(
           data: {"text": combinedText},
@@ -113,9 +117,14 @@ class _HomeScreenState extends State<HomeScreen> {
         log("API Response Data: $apiResponse", name: 'API_CALL');
 
         // 3. SHOW DIALOG
-
+        setState(() {
+          _isLoading = false;
+        });
         _showResultDialog(apiResponse);
       } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
         log('API Error: $e', name: 'API_CALL_ERROR');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -127,6 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -198,53 +210,68 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Question ${_currentPage + 1} of $_questionCount',
-                  style: TextStyle(
-                    color: AppColors.primaryTeal,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Question ${_currentPage + 1} of $_questionCount',
+                      style: TextStyle(
+                        color: AppColors.primaryTeal,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: (_currentPage + 1) / _questionCount,
+                      backgroundColor: AppColors.borderLight,
+                      color: AppColors.primaryTeal,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: (_currentPage + 1) / _questionCount,
-                  backgroundColor: AppColors.borderLight,
-                  color: AppColors.primaryTeal,
-                  minHeight: 8,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            ),
-          ),
+              ),
 
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _questionCount,
-              itemBuilder: (context, index) {
-                return QuestionCardWidget(
-                  index: index,
-                  initialAnswer: _answers[index]!,
-                  onAnswerChanged: (newText) {
-                    // This is the callback that updates the parent's state
-                    setState(() {
-                      _answers[index] = newText;
-                    });
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _questionCount,
+                  itemBuilder: (context, index) {
+                    return QuestionCardWidget(
+                      index: index,
+                      initialAnswer: _answers[index]!,
+                      onAnswerChanged: (newText) {
+                        // This is the callback that updates the parent's state
+                        setState(() {
+                          _answers[index] = newText;
+                        });
+                      },
+                    );
                   },
-                );
-              },
-            ),
-          ),
+                ),
+              ),
 
-          _buildNavigationFooter(),
+              _buildNavigationFooter(),
+            ],
+          ),
+          _isLoading
+              ? Container(
+                  color: const Color.fromARGB(105, 43, 39, 39),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: AppColors.secondaryEmerald,
+                      color: AppColors.lightTeal,
+                    ),
+                  ),
+                )
+              : Container(),
         ],
       ),
     );

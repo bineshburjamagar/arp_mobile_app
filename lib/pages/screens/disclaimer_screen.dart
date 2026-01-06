@@ -6,7 +6,6 @@ import 'package:mindmirror_flutter/database/disclamer_database_helper.dart';
 
 import 'home_screen.dart';
 
-/// A dedicated screen for displaying the critical legal and medical disclaimer.
 class DisclaimerScreen extends StatefulWidget {
   const DisclaimerScreen({super.key});
 
